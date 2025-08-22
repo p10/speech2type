@@ -1,0 +1,55 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.node_repl_history
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+.nyc_output
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Swift
+.build/
+Packages/
+Package.pins
+Package.resolved
+*.xcodeproj
+DerivedData/
+.swiftpm/
+
+# Build artifacts
+# bin/ - commented out because we want to include compiled binaries in git for npm publishing
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+*.tmp
+*.temp

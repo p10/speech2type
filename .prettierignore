@@ -1,0 +1,6 @@
+node_modules/
+webapp/
+bin/hotkey-manager
+bin/permission-checker
+bin/mic-recorder
+*.md

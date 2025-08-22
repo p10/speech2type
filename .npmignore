@@ -1,0 +1,58 @@
+# Development files
+eslint.config.js
+.prettierrc*
+.eslintrc*
+.env*
+
+# Source control
+.git*
+.github/
+
+# Development directories
+node_modules/
+webapp/
+coverage/
+.nyc_output/
+.vscode/
+.idea/
+
+# Test files
+test/
+tests/
+__tests__/
+*.test.js
+*.spec.js
+
+# Documentation (except README.md)
+docs/
+CONTRIBUTING.md
+CHANGELOG.md
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Logs
+logs/
+*.log
+
+# Swift development files
+.build/
+Packages/
+Package.pins
+Package.resolved
+*.xcodeproj/
+DerivedData/
+.swiftpm/
+todos
+
+# Build artifacts that shouldn't be in the package
+*.o
+*.so
+*.dylib
+
+# Temporary files
+tmp/
+temp/
+*.tmp
