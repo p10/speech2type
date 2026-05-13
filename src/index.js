@@ -13,7 +13,7 @@ let hotkeyService, transcriberService, typerService;
 
 function playSound() {
   console.debug('[speech2type] Playing sound effect');
-  exec('afplay /System/Library/Sounds/Tink.aiff', (err) => {
+  exec('afplay /System/Library/Sounds/Funk.aiff', (err) => {
     if (err) console.debug('[speech2type] Sound playback failed:', err.message);
   });
 }
