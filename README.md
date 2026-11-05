@@ -150,13 +150,13 @@ git clone https://github.com/gergomiklos/speech2type.git
 cd speech2type
 
 # Install dependencies
-npm install
+pnpm install
 
 # Build Swift components
-npm run build
+pnpm run build
 
 # Run in development mode
-npm run dev
+pnpm run dev
 ```
 
 ### Project Structure

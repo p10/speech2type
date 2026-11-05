@@ -39,6 +39,7 @@
   "engines": {
     "node": ">=18"
   },
+  "packageManager": "pnpm@12.16.1",
   "publishConfig": {
     "access": "public"
   },
@@ -48,17 +49,17 @@
   "scripts": {
     "start": "./bin/speech2type.js",
     "build:swift": "mkdir -p bin && swiftc -O -o bin/hotkey-manager swift/hotkey-manager.swift && swiftc -O -o bin/permission-checker swift/permission-checker.swift && swiftc -O -o bin/mic-recorder swift/mic-recorder.swift",
-    "build": "npm run build:swift",
-    "dev": "npm run build && ./bin/speech2type.js",
+    "build": "pnpm run build:swift",
+    "dev": "pnpm run build && ./bin/speech2type.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "npm run lint && npm run format:check",
-    "prepack": "npm run build",
-    "prepublishOnly": "npm run build",
+    "check": "pnpm run lint && pnpm run format:check",
+    "prepack": "pnpm run build",
+    "prepublishOnly": "pnpm run build",
     "push": "git add . && git commit -m 'ship!' && git push",
-    "release": "npm version patch && npm publish"
+    "release": "pnpm version patch && pnpm publish"
   },
   "preferGlobal": true,
   "dependencies": {
