@@ -14,54 +14,75 @@ var isCapturing = false
 
 // ---- Keyboard layout helpers ----
 
-private func currentKeyboardLayout() -> UnsafePointer<UCKeyboardLayout>? {
-    guard
-        let src = TISCopyCurrentKeyboardLayoutInputSource()?.takeRetainedValue(),
-        let dataPtr = TISGetInputSourceProperty(src, kTISPropertyUnicodeKeyLayoutData)
-    else { return nil }
+// Kept alive for the whole process: UCKeyTranslate needs the buffer to stay valid.
+var keyboardLayoutData: Data?
 
-    let data = unsafeBitCast(dataPtr, to: CFData.self) as Data
-    return data.withUnsafeBytes { (rbp: UnsafeRawBufferPointer) -> UnsafePointer<UCKeyboardLayout>? in
-        rbp.baseAddress?.assumingMemoryBound(to: UCKeyboardLayout.self)
+/// Uses the current layout, falling back through sources that have layout data.
+/// Input methods (e.g. "Press And Hold", IMEs) report no Unicode key layout data,
+/// which used to make every character hotkey unresolvable.
+private func loadKeyboardLayoutData() -> Data? {
+    if let existing = keyboardLayoutData { return existing }
+
+    let candidates: [TISInputSource?] = [
+        TISCopyCurrentKeyboardLayoutInputSource()?.takeRetainedValue(),
+        TISCopyCurrentKeyboardInputSource()?.takeRetainedValue(),
+        TISCopyCurrentASCIICapableKeyboardLayoutInputSource()?.takeRetainedValue()
+    ]
+
+    for src in candidates {
+        guard let src else { continue }
+        guard let dataPtr = TISGetInputSourceProperty(src, kTISPropertyUnicodeKeyLayoutData) else { continue }
+        let data = unsafeBitCast(dataPtr, to: CFData.self) as Data
+        if !data.isEmpty {
+            keyboardLayoutData = data
+            return data
+        }
     }
+
+    return nil
 }
 
 /// keycode -> visible string (respect Shift/Option only; useful for display/human output)
 private func keycodeToString(_ keyCode: CGKeyCode, flags: CGEventFlags) -> String? {
-    guard let layout = currentKeyboardLayout() else { return nil }
+    guard let data = loadKeyboardLayoutData() else { return nil }
 
-    var deadKeyState: UInt32 = 0
-    var chars = [UniChar](repeating: 0, count: 8)
-    var length: Int = 0
+    return data.withUnsafeBytes { (rbp: UnsafeRawBufferPointer) -> String? in
+        guard let layout = rbp.baseAddress?.assumingMemoryBound(to: UCKeyboardLayout.self) else { return nil }
 
-    // Carbon shift state from flags
-    var shiftState: UInt32 = 0
-    if flags.contains(.maskShift)     { shiftState |= UInt32(shiftKeyBit) }
-    if flags.contains(.maskAlternate) { shiftState |= UInt32(optionKeyBit) }
+        var deadKeyState: UInt32 = 0
+        var chars = [UniChar](repeating: 0, count: 8)
+        var length: Int = 0
 
-    let status = UCKeyTranslate(
-        layout,
-        keyCode,
-        UInt16(kUCKeyActionDown),
-        shiftState,
-        UInt32(LMGetKbdType()),
-        OptionBits(kUCKeyTranslateNoDeadKeysBit),
-        &deadKeyState,
-        chars.count,
-        &length,
-        &chars
-    )
+        // Carbon shift state from flags. UCKeyTranslate expects the classic
+        // 8-bit shift state, i.e. the 16-bit key masks shifted right by 8.
+        var shiftState: UInt32 = 0
+        if flags.contains(.maskShift)     { shiftState |= UInt32(shiftKey >> 8) }
+        if flags.contains(.maskAlternate) { shiftState |= UInt32(optionKey >> 8) }
 
-    if status == noErr, length > 0 {
-        return String(utf16CodeUnits: chars, count: length)
+        let status = UCKeyTranslate(
+            layout,
+            keyCode,
+            UInt16(kUCKeyActionDown),
+            shiftState,
+            UInt32(LMGetKbdType()),
+            OptionBits(kUCKeyTranslateNoDeadKeysBit),
+            &deadKeyState,
+            chars.count,
+            &length,
+            &chars
+        )
+
+        if status == noErr, length > 0 {
+            return String(utf16CodeUnits: chars, count: length)
+        }
+        return nil
     }
-    return nil
 }
 
 /// character -> keycode by scanning all plausible keycodes
 /// We try unshifted first, then Shift, then Option (rarely desired, but can help on some layouts).
 private func characterToKeycode(_ ch: Character) -> (CGKeyCode, CGEventFlags)? {
-    guard currentKeyboardLayout() != nil else { return nil }
+    guard loadKeyboardLayoutData() != nil else { return nil }
 
     // All keycodes 0...127 is sufficient for Apple keyboards; scanning is cheap.
     let range: ClosedRange<CGKeyCode> = 0...127
